@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TF Analyst Dashboard v3</title>
+    <title>TF Analyst Dashboard v4</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -16,10 +16,16 @@
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .tf-green { color: #0B5D3B; }
         .bg-tf-green { background-color: #0B5D3B; }
-        
         .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        }
+        .upgrade-anim { animation: pulse-gold 2s infinite; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -32,33 +38,37 @@
                     <i data-lucide="trending-up"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tf-green">TF Analyst v3</h1>
-                    <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Financial Tracking & Redemption</p>
+                    <h1 class="text-xl font-bold tf-green">TF Analyst v4</h1>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Performance & Auto-Membership</p>
                 </div>
             </div>
 
             <div class="flex flex-wrap justify-center gap-3">
                 <!-- Backup Actions -->
                 <div class="flex items-center gap-2 mr-2 border-r pr-4 border-gray-200">
-                    <button onclick="exportCSV()" class="p-2 text-gray-500 hover:text-tf-green hover:bg-gray-100 rounded-lg transition" title="Unduh CSV">
+                    <button onclick="exportCSV()" class="p-2 text-gray-400 hover:text-tf-green transition" title="Unduh CSV">
                         <i data-lucide="download"></i>
                     </button>
-                    <label class="p-2 text-gray-500 hover:text-tf-green hover:bg-gray-100 rounded-lg cursor-pointer transition" title="Unggah CSV">
+                    <label class="p-2 text-gray-400 hover:text-tf-green cursor-pointer transition" title="Unggah CSV">
                         <i data-lucide="upload"></i>
                         <input type="file" id="csvFileInput" class="hidden" accept=".csv" onchange="importCSV(event)">
                     </label>
                 </div>
 
-                <!-- Membership & Medal -->
-                <div class="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 flex flex-col">
-                    <label class="text-[9px] uppercase font-bold text-gray-400">Membership</label>
-                    <select id="membershipSelect" onchange="updateDashboard()" class="bg-transparent text-sm font-bold text-gray-700 focus:outline-none cursor-pointer">
+                <!-- Membership -->
+                <div id="membershipCard" class="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 flex flex-col transition-all duration-500">
+                    <div class="flex items-center gap-1">
+                        <label class="text-[9px] uppercase font-bold text-gray-400">Membership</label>
+                        <div id="autoUpgradeBadge" class="hidden text-[8px] bg-yellow-500 text-white px-1 rounded">AUTO</div>
+                    </div>
+                    <select id="membershipSelect" onchange="manualMembershipChange()" class="bg-transparent text-sm font-bold text-gray-700 focus:outline-none cursor-pointer">
                         <option value="basic">Basic (20%)</option>
                         <option value="prospect">Prospect (30-50%)</option>
                         <option value="priority">Priority (100%)</option>
                     </select>
                 </div>
 
+                <!-- Medal -->
                 <div class="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center gap-3">
                     <div class="flex flex-col">
                         <label class="text-[9px] uppercase font-bold text-gray-400">Medal</label>
@@ -76,9 +86,8 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
 
-        <!-- TOP STATS -->
+        <!-- WALLET STATS -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            <!-- Total Pips (Points) -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-tf-green">
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Total TF Pips</p>
                 <h2 id="totalAccumulatedDisplay" class="text-3xl font-extrabold tf-green mt-1">0</h2>
@@ -87,32 +96,28 @@
                 </div>
             </div>
 
-            <!-- Ready to Cash Out -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-blue-500">
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Siap Cair (Kelipatan 100)</p>
                 <div class="flex items-center justify-between">
                     <h2 id="redeemableDisplay" class="text-3xl font-extrabold text-blue-600 mt-1">0</h2>
-                    <button onclick="handleCashOut()" id="cashOutBtn" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed">
+                    <button onclick="handleCashOut()" id="cashOutBtn" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-30">
                         <i data-lucide="hand-coins" size="20"></i>
                     </button>
                 </div>
                 <p id="lockReasonText" class="mt-4 text-[10px] text-red-500 font-bold"></p>
             </div>
 
-            <!-- Potential Current Income -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-yellow-500">
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Estimasi Pencairan</p>
                 <h2 id="potentialIncomeDisplay" class="text-2xl font-extrabold text-yellow-600 mt-1">Rp 0</h2>
                 <p id="incomeRateText" class="mt-4 text-[10px] text-gray-400"></p>
             </div>
 
-            <!-- TOTAL CASHED OUT INCOME -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-purple-600">
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Total Realized Income</p>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Realized Income</p>
                 <h2 id="totalRealizedIncome" class="text-2xl font-extrabold text-purple-600 mt-1">Rp 0</h2>
                 <div class="mt-4 flex items-center gap-1 text-[10px] text-purple-400 font-bold">
-                    <i data-lucide="check-check" size="12"></i> 
-                    TELAH DICAIRKAN
+                    <i data-lucide="check-check" size="12"></i> TELAH DICAIRKAN
                 </div>
             </div>
         </div>
@@ -121,9 +126,9 @@
             <!-- INPUT FORM -->
             <div class="lg:col-span-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
                         <h3 id="formTitle" class="font-bold text-tf-green flex items-center gap-2">
-                            <i data-lucide="pen-tool" size="18"></i> Input Kinerja
+                            <i data-lucide="plus-square" size="18"></i> Input Data
                         </h3>
                         <button onclick="resetForm()" id="cancelEditBtn" class="hidden text-xs text-red-500 font-bold">Batal</button>
                     </div>
@@ -132,42 +137,39 @@
                         <input type="hidden" id="entryId">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Periode</label>
-                            <input type="month" id="monthInput" required class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                            <input type="month" id="monthInput" required class="w-full p-2 border rounded-lg text-sm">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Total Signal Closed</label>
-                            <input type="number" id="signalInput" required min="0" oninput="calculateLivePreview()" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Signals Closed</label>
+                            <input type="number" id="signalInput" required min="0" oninput="calculateLivePreview()" class="w-full p-2 border rounded-lg text-sm">
                         </div>
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Total Pips (Raw)</label>
-                            <input type="number" id="rawPipsInput" step="0.1" required oninput="calculateLivePreview()" class="w-full p-2 border border-gray-300 rounded-lg text-lg font-bold tf-green">
+                        <div class="bg-gray-50 p-3 rounded-lg border">
+                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Monthly Pips (Raw)</label>
+                            <input type="number" id="rawPipsInput" step="0.1" required oninput="calculateLivePreview()" class="w-full p-2 border rounded-lg text-lg font-bold tf-green">
                         </div>
 
-                        <!-- LIVE STATS -->
-                        <div class="grid grid-cols-2 gap-2 text-center">
-                            <div class="bg-green-50 p-2 rounded-lg">
-                                <span class="text-[9px] text-green-700 font-bold uppercase">Valued (x0.5)</span>
-                                <p id="previewValued" class="text-sm font-bold tf-green">0.0</p>
+                        <div class="grid grid-cols-2 gap-2 text-center text-[10px] font-bold uppercase">
+                            <div class="bg-green-50 p-2 rounded-lg text-green-700">
+                                Valued: <span id="previewValued" class="block text-sm">0.0</span>
                             </div>
-                            <div class="bg-green-50 p-2 rounded-lg">
-                                <span class="text-[9px] text-green-700 font-bold uppercase">TF Pips</span>
-                                <p id="previewTFPips" class="text-sm font-bold tf-green">0.0</p>
+                            <div class="bg-green-50 p-2 rounded-lg text-green-700">
+                                TF Pips: <span id="previewTFPips" class="block text-sm">0.0</span>
                             </div>
                         </div>
 
-                        <button type="submit" id="submitBtn" class="w-full bg-tf-green text-white py-3 rounded-lg font-bold hover:bg-green-900 transition flex items-center justify-center gap-2">
+                        <button type="submit" id="submitBtn" class="w-full bg-tf-green text-white py-3 rounded-lg font-bold hover:opacity-90 flex items-center justify-center gap-2">
                             <i data-lucide="save" size="18"></i> Simpan
                         </button>
                     </form>
                 </div>
             </div>
 
-            <!-- DATA TABLE -->
-            <div class="lg:col-span-8 space-y-6">
+            <!-- TABLE -->
+            <div class="lg:col-span-8">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                    <div class="flex items-center justify-between mb-4 border-b pb-2 border-gray-100">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
                         <h3 class="font-bold tf-green">History Kinerja</h3>
-                        <div id="statusBanner" class="text-[10px] font-extrabold px-3 py-1 rounded-full bg-gray-100 text-gray-400">INPUT DATA...</div>
+                        <div id="statusBanner" class="text-[10px] font-extrabold px-3 py-1 rounded-full bg-gray-100 text-gray-400">STATUS</div>
                     </div>
 
                     <div class="overflow-x-auto custom-scroll">
@@ -184,7 +186,7 @@
                             </thead>
                             <tbody id="historyTableBody" class="divide-y divide-gray-100"></tbody>
                         </table>
-                        <div id="emptyState" class="hidden py-10 text-center text-gray-400 italic">Belum ada data history.</div>
+                        <div id="emptyState" class="hidden py-10 text-center text-gray-400">Belum ada data.</div>
                     </div>
                 </div>
             </div>
@@ -192,7 +194,6 @@
     </main>
 
     <script>
-        // --- CONSTANTS ---
         const MEDAL_LEVELS = [
             { medal: 0, level: "Newbie", min: 0, max: 0 },
             { medal: 1, level: "Rookie", min: 1, max: 2 },
@@ -214,15 +215,13 @@
 
         const RATES = { "Elite": 5000, "Master": 10000, "Legend": 20000 };
 
-        // --- STATE ---
         let state = {
-            medal: parseInt(localStorage.getItem('tf_v3_medal')) || 0,
-            membership: localStorage.getItem('tf_v3_membership') || 'basic',
-            history: JSON.parse(localStorage.getItem('tf_v3_history')) || [],
-            totalRealized: parseInt(localStorage.getItem('tf_v3_realized')) || 0
+            medal: parseInt(localStorage.getItem('tf_v4_medal')) || 0,
+            membership: localStorage.getItem('tf_v4_membership') || 'basic',
+            history: JSON.parse(localStorage.getItem('tf_v4_history')) || [],
+            totalRealized: parseInt(localStorage.getItem('tf_v4_realized')) || 0
         };
 
-        // --- INITIALIZATION ---
         function init() {
             const medalSelect = document.getElementById('medalSelect');
             for(let i=0; i<=14; i++) {
@@ -239,15 +238,30 @@
             lucide.createIcons();
         }
 
-        // --- LOGIC ---
+        // --- NEW LOGIC: AUTO UPGRADE CHECK ---
+        function checkAutoUpgradeEligibility() {
+            if (state.medal < 5) return false;
+            
+            // Check if there are any monthly losses (raw pips < 0)
+            const hasLoss = state.history.some(h => parseFloat(h.rawPips) < 0);
+            
+            // If no loss and medal >= 5, auto upgrade to Prospect if currently Basic
+            if (!hasLoss && state.membership === 'basic' && state.history.length > 0) {
+                state.membership = 'prospect';
+                localStorage.setItem('tf_v4_membership', 'prospect');
+                document.getElementById('membershipSelect').value = 'prospect';
+                return true;
+            }
+            return false;
+        }
+
         function calculateMetrics(data, medal) {
             const signals = parseInt(data.signals) || 0;
             const rawPips = parseFloat(data.rawPips) || 0;
             const valuedPips = rawPips * 0.5;
 
-            // Simple previous month consistency check
+            // Consistency Check
             let prevValued = 0;
-            const sorted = [...state.history].sort((a,b) => new Date(a.month) - new Date(b.month));
             const currentMonthObj = new Date(data.month + "-01");
             currentMonthObj.setMonth(currentMonthObj.getMonth() - 1);
             const prevMonthStr = currentMonthObj.toISOString().slice(0, 7);
@@ -262,14 +276,29 @@
             const multiplier = multFound ? multFound.mult : 0;
             const tfPoints = isQualified ? (valuedPips * multiplier) : 0;
 
-            return { isQualified, valuedPips, tfPoints, rawPips };
+            return { isQualified, valuedPips, tfPoints, rawPips, isLoss: rawPips < 0 };
         }
 
         function updateDashboard() {
             state.medal = parseInt(document.getElementById('medalSelect').value);
-            state.membership = document.getElementById('membershipSelect').value;
-            localStorage.setItem('tf_v3_medal', state.medal);
-            localStorage.setItem('tf_v3_membership', state.membership);
+            localStorage.setItem('tf_v4_medal', state.medal);
+
+            // Run auto upgrade logic
+            const upgraded = checkAutoUpgradeEligibility();
+            const memCard = document.getElementById('membershipCard');
+            const badge = document.getElementById('autoUpgradeBadge');
+
+            if (upgraded) {
+                memCard.classList.add('border-yellow-500', 'bg-yellow-50', 'upgrade-anim');
+                badge.classList.remove('hidden');
+            } else if (state.membership === 'prospect' && !state.history.some(h => parseFloat(h.rawPips) < 0) && state.medal >= 5) {
+                // Persistent styling if it was an auto upgrade
+                memCard.classList.add('border-yellow-500', 'bg-yellow-50');
+                badge.classList.remove('hidden');
+            } else {
+                memCard.classList.remove('border-yellow-500', 'bg-yellow-50', 'upgrade-anim');
+                badge.classList.add('hidden');
+            }
 
             const levelFound = MEDAL_LEVELS.find(l => state.medal >= l.min && state.medal <= l.max);
             const level = levelFound ? levelFound.level : "Newbie";
@@ -279,25 +308,24 @@
             document.getElementById('levelDisplay').innerText = level;
             document.getElementById('multiplierDisplay').innerText = `${multiplier}x Multiplier`;
 
-            // Totals
             let totalPoints = 0;
             state.history.forEach(h => {
                 const m = calculateMetrics(h, state.medal);
                 totalPoints += m.tfPoints;
             });
 
-            // Unlock logic
+            // Redemption Logic
             let unlockPct = 0;
             let lockReason = "";
             const isElitePlus = state.medal >= 5;
             const isMasterPlus = state.medal >= 8;
 
             if(state.membership === 'priority') {
-                if(isMasterPlus) unlockPct = 1.0; else lockReason = "Butuh Medal 8 (Master)";
+                if(isMasterPlus) unlockPct = 1.0; else lockReason = "Butuh Medal 8+";
             } else if(state.membership === 'prospect') {
-                if(isMasterPlus) unlockPct = 0.5; else if(isElitePlus) unlockPct = 0.3; else lockReason = "Butuh Min. Elite";
+                if(isMasterPlus) unlockPct = 0.5; else if(isElitePlus) unlockPct = 0.3; else lockReason = "Butuh Medal 5+";
             } else {
-                if(isElitePlus) unlockPct = 0.2; else lockReason = "Butuh Min. Elite";
+                if(isElitePlus) unlockPct = 0.2; else lockReason = "Butuh Medal 5+";
             }
 
             const rawRedeem = totalPoints * unlockPct;
@@ -308,7 +336,7 @@
             document.getElementById('totalAccumulatedDisplay').innerText = totalPoints.toLocaleString('id-ID', {maximumFractionDigits: 1});
             document.getElementById('redeemableDisplay').innerText = finalRedeem.toLocaleString('id-ID');
             document.getElementById('potentialIncomeDisplay').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(potentialIncome);
-            document.getElementById('incomeRateText').innerText = finalRedeem > 0 ? `Rate: Rp ${rate.toLocaleString()}/pips` : "Belum memenuhi kriteria pencairan.";
+            document.getElementById('incomeRateText').innerText = finalRedeem > 0 ? `Rate: Rp ${rate.toLocaleString()}/pips` : "Belum memenuhi kriteria.";
             document.getElementById('lockReasonText').innerText = unlockPct === 0 ? `LOCKED: ${lockReason}` : "";
             document.getElementById('cashOutBtn').disabled = finalRedeem < 100;
             document.getElementById('totalRealizedIncome').innerText = new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(state.totalRealized);
@@ -319,23 +347,23 @@
 
         function renderTable() {
             const tbody = document.getElementById('historyTableBody');
-            const empty = document.getElementById('emptyState');
             tbody.innerHTML = '';
-            
             const sorted = [...state.history].sort((a,b) => new Date(b.month) - new Date(a.month));
             
-            if(sorted.length === 0) {
-                empty.classList.remove('hidden');
-            } else {
-                empty.classList.add('hidden');
+            if(sorted.length === 0) document.getElementById('emptyState').classList.remove('hidden');
+            else {
+                document.getElementById('emptyState').classList.add('hidden');
                 sorted.forEach(item => {
                     const m = calculateMetrics(item, state.medal);
                     const row = document.createElement('tr');
-                    row.className = "hover:bg-gray-50 transition border-b border-gray-100 last:border-0";
+                    row.className = `hover:bg-gray-50 border-b border-gray-100 last:border-0 ${m.isLoss ? 'bg-red-50/30' : ''}`;
                     
                     row.innerHTML = `
-                        <td class="px-4 py-3 font-bold text-gray-700">${new Date(item.month).toLocaleDateString('id-ID', {month:'long', year:'numeric'})}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${item.rawPips}</td>
+                        <td class="px-4 py-3 font-bold text-gray-700">
+                            ${new Date(item.month).toLocaleDateString('id-ID', {month:'short', year:'numeric'})}
+                            ${m.isLoss ? '<span class="ml-1 text-[8px] text-red-500 border border-red-500 px-1 rounded">LOSS</span>' : ''}
+                        </td>
+                        <td class="px-4 py-3 text-right ${m.isLoss ? 'text-red-500 font-bold' : 'text-gray-500'}">${item.rawPips}</td>
                         <td class="px-4 py-3 text-right font-mono">${m.valuedPips.toFixed(1)}</td>
                         <td class="px-4 py-3 text-center">
                             <span class="px-2 py-0.5 rounded-full font-bold ${m.isQualified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
@@ -344,8 +372,8 @@
                         </td>
                         <td class="px-4 py-3 text-right font-mono font-bold text-tf-green">${m.tfPoints.toFixed(1)}</td>
                         <td class="px-4 py-3 text-right flex justify-end gap-2">
-                            <button onclick="editEntry('${item.id}')" class="text-blue-500 hover:bg-blue-50 p-1 rounded"><i data-lucide="edit-3" size="14"></i></button>
-                            <button onclick="deleteEntry('${item.id}')" class="text-red-400 hover:bg-red-50 p-1 rounded"><i data-lucide="trash-2" size="14"></i></button>
+                            <button onclick="editEntry('${item.id}')" class="text-blue-500 p-1"><i data-lucide="edit-3" size="14"></i></button>
+                            <button onclick="deleteEntry('${item.id}')" class="text-red-400 p-1"><i data-lucide="trash-2" size="14"></i></button>
                         </td>
                     `;
                     tbody.appendChild(row);
@@ -374,53 +402,43 @@
             }
         }
 
-        // --- ACTIONS ---
         function handleFormSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('entryId').value;
             const month = document.getElementById('monthInput').value;
-
-            if(!id && state.history.some(h => h.month === month)) {
-                alert("Data bulan ini sudah ada!"); return;
-            }
-
             const entry = {
                 id: id || Date.now().toString(),
                 month: month,
                 signals: document.getElementById('signalInput').value,
                 rawPips: document.getElementById('rawPipsInput').value
             };
-
             if(id) state.history = state.history.map(h => h.id === id ? entry : h);
             else state.history.push(entry);
-
-            localStorage.setItem('tf_v3_history', JSON.stringify(state.history));
+            localStorage.setItem('tf_v4_history', JSON.stringify(state.history));
             resetForm();
             updateDashboard();
         }
 
         function handleCashOut() {
-            const currentRedeemableText = document.getElementById('redeemableDisplay').innerText.replace(/\./g, '');
-            const pointsToCair = parseInt(currentRedeemableText);
-            const currentIncomeText = document.getElementById('potentialIncomeDisplay').innerText.replace(/[^0-9]/g, '');
-            const incomeToCair = parseInt(currentIncomeText);
-
-            if(pointsToCair < 100) return;
-
-            if(confirm(`Konfirmasi Cash Out ${pointsToCair} TF Pips?\nNilai: Rp ${incomeToCair.toLocaleString()}`)) {
-                // In a real app, we'd subtract points. Here, we track "Realized Income" separately 
-                // as a milestone since points are derived from monthly history.
-                state.totalRealized += incomeToCair;
-                localStorage.setItem('tf_v3_realized', state.totalRealized);
-                alert("Berhasil dicatat ke Realized Income!");
+            const points = parseInt(document.getElementById('redeemableDisplay').innerText.replace(/\./g, ''));
+            const income = parseInt(document.getElementById('potentialIncomeDisplay').innerText.replace(/[^0-9]/g, ''));
+            if(points < 100) return;
+            if(confirm(`Konfirmasi Cash Out ${points} TF Pips?\nNilai: Rp ${income.toLocaleString()}`)) {
+                state.totalRealized += income;
+                localStorage.setItem('tf_v4_realized', state.totalRealized);
                 updateDashboard();
             }
         }
 
+        function manualMembershipChange() {
+            state.membership = document.getElementById('membershipSelect').value;
+            localStorage.setItem('tf_v4_membership', state.membership);
+            updateDashboard();
+        }
+
         function resetForm() {
             document.getElementById('entryId').value = '';
-            document.getElementById('formTitle').innerText = "Input Kinerja";
-            document.getElementById('submitBtn').innerHTML = `<i data-lucide="save" size="18"></i> Simpan`;
+            document.getElementById('formTitle').innerText = "Input Data";
             document.getElementById('cancelEditBtn').classList.add('hidden');
             document.getElementById('signalInput').value = '';
             document.getElementById('rawPipsInput').value = '';
@@ -434,8 +452,7 @@
                 document.getElementById('monthInput').value = item.month;
                 document.getElementById('signalInput').value = item.signals;
                 document.getElementById('rawPipsInput').value = item.rawPips;
-                document.getElementById('formTitle').innerText = "Edit Kinerja";
-                document.getElementById('submitBtn').innerHTML = `<i data-lucide="refresh-cw" size="18"></i> Perbarui`;
+                document.getElementById('formTitle').innerText = "Edit Data";
                 document.getElementById('cancelEditBtn').classList.remove('hidden');
                 calculateLivePreview();
                 window.scrollTo({top:0, behavior:'smooth'});
@@ -443,24 +460,21 @@
         }
 
         function deleteEntry(id) {
-            if(confirm("Hapus data ini?")) {
+            if(confirm("Hapus?")) {
                 state.history = state.history.filter(h => h.id !== id);
-                localStorage.setItem('tf_v3_history', JSON.stringify(state.history));
+                localStorage.setItem('tf_v4_history', JSON.stringify(state.history));
                 updateDashboard();
             }
         }
 
-        // --- CSV ENGINE ---
         function exportCSV() {
             let csv = "ID,Bulan,Signals,RawPips\n";
-            state.history.forEach(h => {
-                csv += `${h.id},${h.month},${h.signals},${h.rawPips}\n`;
-            });
+            state.history.forEach(h => { csv += `${h.id},${h.month},${h.signals},${h.rawPips}\n`; });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', `tf-analyst-data-${new Date().toISOString().slice(0,10)}.csv`);
+            a.href = url;
+            a.download = `tf-data-${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
         }
 
@@ -471,28 +485,14 @@
             reader.onload = function(evt) {
                 const text = evt.target.result;
                 const rows = text.split('\n').slice(1);
-                const importedData = [];
+                const data = [];
                 rows.forEach(row => {
                     const cols = row.split(',');
-                    if(cols.length >= 4) {
-                        importedData.push({
-                            id: cols[0],
-                            month: cols[1],
-                            signals: cols[2],
-                            rawPips: cols[3]
-                        });
-                    }
+                    if(cols.length >= 4) data.push({id:cols[0], month:cols[1], signals:cols[2], rawPips:cols[3]});
                 });
-                if(confirm(`Impor ${importedData.length} data? Data lama akan digabung.`)) {
-                    // Unique merge based on month
-                    importedData.forEach(newItem => {
-                        const existingIdx = state.history.findIndex(h => h.month === newItem.month);
-                        if(existingIdx > -1) state.history[existingIdx] = newItem;
-                        else state.history.push(newItem);
-                    });
-                    localStorage.setItem('tf_v3_history', JSON.stringify(state.history));
-                    updateDashboard();
-                }
+                state.history = data;
+                localStorage.setItem('tf_v4_history', JSON.stringify(state.history));
+                updateDashboard();
             };
             reader.readAsText(file);
         }
