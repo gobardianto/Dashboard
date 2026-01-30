@@ -3,218 +3,695 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator Ilmiah Pro - Multi-Fungsi</title>
+    <title>TF Analyst Dashboard</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #F4F6F5; color: #1F2933; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .tf-green { color: #0B5D3B; }
+        .bg-tf-green { background-color: #0B5D3B; }
+        .border-tf-green { border-color: #0B5D3B; }
         
-        body {
-            font-family: 'JetBrains+Mono', monospace;
-            background: #0f172a;
-        }
-
-        .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .calc-btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            touch-action: manipulation;
-        }
-
-        .calc-btn:active {
-            transform: scale(0.9);
-        }
-
-        .display-screen {
-            background: #020617;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 10px;
-        }
+        /* Custom Scrollbar for Table */
+        .custom-scroll::-webkit-scrollbar { height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen pb-10">
 
-    <!-- Container Utama -->
-    <div class="max-w-md w-full glass rounded-3xl p-6 shadow-2xl overflow-hidden">
-        
-        <!-- Header & Status -->
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+    <!-- HEADER -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 rounded-xl bg-tf-green text-white shadow-lg shadow-green-900/20">
+                    <i data-lucide="trending-up"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tf-green">TF Analyst Dashboard</h1>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Financial & Performance Tracker</p>
+                </div>
             </div>
-            <span class="text-slate-400 text-xs font-bold tracking-widest uppercase">Scientific v2.5</span>
+
+            <!-- Global Settings (Membership & Medal) -->
+            <div class="flex flex-wrap justify-center gap-3">
+                <!-- Membership -->
+                <div class="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 flex flex-col">
+                    <label class="text-[9px] uppercase font-bold text-gray-400">Membership</label>
+                    <select id="membershipSelect" onchange="updateDashboard()" class="bg-transparent text-sm font-bold text-gray-700 focus:outline-none cursor-pointer">
+                        <option value="basic">Basic (20%)</option>
+                        <option value="prospect">Prospect (30-50%)</option>
+                        <option value="priority">Priority (100%)</option>
+                    </select>
+                </div>
+
+                <!-- Medal -->
+                <div class="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center gap-3">
+                    <div class="flex flex-col">
+                        <label class="text-[9px] uppercase font-bold text-gray-400">Current Medal</label>
+                        <select id="medalSelect" onchange="updateDashboard()" class="bg-transparent text-sm font-bold tf-green focus:outline-none cursor-pointer">
+                            <!-- Options generated by JS -->
+                        </select>
+                    </div>
+                    <div class="h-6 w-[1px] bg-gray-300"></div>
+                    <div class="flex flex-col items-end min-w-[60px]">
+                        <span class="text-[9px] uppercase font-bold text-gray-400">Level</span>
+                        <span id="levelDisplay" class="text-sm font-bold text-gray-800">Newbie</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+
+        <!-- TOP STATS (WALLET) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Total Accumulation -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 relative overflow-hidden border-l-4 border-l-[#0B5D3B]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Total Akumulasi</p>
+                        <h2 class="text-3xl font-extrabold tf-green mt-1">
+                            <span id="totalAccumulatedDisplay">0</span> <span class="text-sm font-medium text-gray-500">TF Pips</span>
+                        </h2>
+                    </div>
+                    <div class="p-2 bg-green-50 rounded-lg tf-green">
+                        <i data-lucide="trophy" size="20"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                    <span id="multiplierDisplay" class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">0x Multiplier</span>
+                    <span>pada level saat ini</span>
+                </div>
+            </div>
+
+            <!-- Ready to Redeem -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 relative overflow-hidden border-l-4 border-l-[#4CAF50]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Siap Di-Redeem</p>
+                        <h2 class="text-3xl font-extrabold text-[#1F2933] mt-1">
+                            <span id="redeemableDisplay">0</span> <span class="text-sm font-medium text-gray-500">TF Pips</span>
+                        </h2>
+                    </div>
+                    <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <i data-lucide="wallet" size="20"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs">
+                    <div id="eligibleContent" class="hidden flex-col gap-1">
+                        <div class="flex justify-between text-gray-500">
+                            <span>Unlock Rate:</span>
+                            <span id="unlockRateText" class="font-bold text-gray-700">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                            <div id="unlockProgressBar" class="bg-[#4CAF50] h-1.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div id="lockedContent" class="flex items-center gap-1 text-red-500 font-bold bg-red-50 px-2 py-1 rounded w-fit">
+                        <i data-lucide="alert-circle" size="12"></i>
+                        <span id="lockReasonText">Locked</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Est Income -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 relative overflow-hidden border-l-4 border-l-yellow-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Estimasi Income (IDR)</p>
+                        <h2 id="incomeDisplay" class="text-2xl font-extrabold text-yellow-600 mt-1">Rp 0</h2>
+                    </div>
+                    <div class="p-2 bg-yellow-50 rounded-lg text-yellow-600">
+                        <i data-lucide="crown" size="20"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-gray-500">
+                    <span id="incomeRateText">Min. Redeem 100 Pips (Kelipatan)</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Layar Display -->
-        <div class="display-screen rounded-2xl p-6 mb-6 flex flex-col items-end justify-end overflow-hidden border border-slate-700">
-            <div id="history" class="text-slate-500 text-sm h-6 mb-1 truncate w-full text-right italic"></div>
-            <div id="display" class="text-sky-400 text-4xl font-bold truncate w-full text-right">0</div>
-        </div>
-
-        <!-- Grid Tombol -->
-        <div class="grid grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- Fungsi Ilmiah (Baris 1) -->
-            <button onclick="clearDisplay()" class="calc-btn col-span-1 bg-rose-900/40 text-rose-400 p-4 rounded-xl font-bold border border-rose-500/20 hover:bg-rose-800/60">AC</button>
-            <button onclick="deleteLast()" class="calc-btn bg-slate-700/50 text-slate-300 p-4 rounded-xl font-bold border border-slate-600/20 hover:bg-slate-600">DEL</button>
-            <button onclick="insert('(')" class="calc-btn bg-slate-700/50 text-sky-400 p-4 rounded-xl font-bold hover:bg-slate-600 text-xl">(</button>
-            <button onclick="insert(')')" class="calc-btn bg-slate-700/50 text-sky-400 p-4 rounded-xl font-bold hover:bg-slate-600 text-xl">)</button>
+            <!-- LEFT COLUMN: INPUT FORM -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 h-full">
+                    <div class="flex items-center justify-between mb-4 border-b pb-2 border-gray-100">
+                        <div class="flex items-center gap-2 tf-green">
+                            <i data-lucide="layout-dashboard" size="20"></i>
+                            <h3 id="formTitle" class="font-bold text-lg">Input Kinerja</h3>
+                        </div>
+                        <button onclick="resetForm()" id="cancelEditBtn" class="hidden text-xs text-red-500 hover:text-red-700 font-bold">Batal Edit</button>
+                    </div>
 
-            <!-- Fungsi Ilmiah (Baris 2) -->
-            <button onclick="mathFunc('sin')" class="calc-btn bg-slate-800/80 text-emerald-400 p-3 rounded-xl text-xs font-bold hover:bg-slate-700">SIN</button>
-            <button onclick="mathFunc('cos')" class="calc-btn bg-slate-800/80 text-emerald-400 p-3 rounded-xl text-xs font-bold hover:bg-slate-700">COS</button>
-            <button onclick="mathFunc('tan')" class="calc-btn bg-slate-800/80 text-emerald-400 p-3 rounded-xl text-xs font-bold hover:bg-slate-700">TAN</button>
-            <button onclick="insert('/')" class="calc-btn bg-sky-900/40 text-sky-400 p-4 rounded-xl font-bold border border-sky-500/20 hover:bg-sky-800/60 text-xl">÷</button>
+                    <form id="performanceForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                        <input type="hidden" id="entryId">
+                        
+                        <!-- Month -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Periode (Bulan)</label>
+                            <input type="month" id="monthInput" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:border-[#0B5D3B] focus:ring-1 focus:ring-[#0B5D3B] outline-none font-medium">
+                        </div>
 
-            <!-- Angka & Operator -->
-            <button onclick="insert('7')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">7</button>
-            <button onclick="insert('8')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">8</button>
-            <button onclick="insert('9')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">9</button>
-            <button onclick="insert('*')" class="calc-btn bg-sky-900/40 text-sky-400 p-4 rounded-xl font-bold border border-sky-500/20 hover:bg-sky-800/60 text-xl">×</button>
+                        <!-- Signals -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Total Signal Closed</label>
+                            <input type="number" id="signalInput" placeholder="0" required min="0" oninput="calculateLivePreview()" class="w-full p-2.5 border border-gray-300 rounded-lg focus:border-[#0B5D3B] focus:ring-1 focus:ring-[#0B5D3B] outline-none font-medium text-lg">
+                            <div class="flex justify-between mt-1 text-[10px]">
+                                <span class="text-gray-400">Target: Min 5 Signal</span>
+                                <span id="signalStatus" class="text-gray-400 font-bold">-</span>
+                            </div>
+                        </div>
 
-            <button onclick="insert('4')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">4</button>
-            <button onclick="insert('5')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">5</button>
-            <button onclick="insert('6')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">6</button>
-            <button onclick="insert('-')" class="calc-btn bg-sky-900/40 text-sky-400 p-4 rounded-xl font-bold border border-sky-500/20 hover:bg-sky-800/60 text-xl">−</button>
+                        <!-- Raw Pips -->
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1 flex items-center gap-1">
+                                <i data-lucide="activity" size="12"></i> Total Monthly Pips (Raw)
+                            </label>
+                            <input type="number" id="rawPipsInput" placeholder="+/-" required step="0.1" oninput="calculateLivePreview()" class="w-full p-2.5 border border-gray-300 rounded-lg focus:border-[#0B5D3B] focus:ring-1 focus:ring-[#0B5D3B] outline-none font-bold text-xl tf-green">
+                            <p class="text-[10px] text-gray-400 mt-2">Masukkan total pips murni yang didapat.</p>
+                        </div>
 
-            <button onclick="insert('1')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">1</button>
-            <button onclick="insert('2')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">2</button>
-            <button onclick="insert('3')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">3</button>
-            <button onclick="insert('+')" class="calc-btn bg-sky-900/40 text-sky-400 p-4 rounded-xl font-bold border border-sky-500/20 hover:bg-sky-800/60 text-xl">+</button>
+                        <!-- Live Preview Box -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs text-gray-500 px-1">
+                                <span>Kalkulasi Otomatis (XAUUSD x0.5)</span>
+                                <i data-lucide="calculator" size="12"></i>
+                            </div>
+                            <div class="flex items-center gap-3 bg-green-50 p-3 rounded-lg border border-green-100">
+                                <div class="flex-1">
+                                    <span class="block text-[10px] uppercase font-bold text-green-800">Valued Pips</span>
+                                    <span id="previewValuedPips" class="block text-xl font-bold tf-green">0.0</span>
+                                </div>
+                                <i data-lucide="arrow-right" size="16" class="text-green-300"></i>
+                                <div class="flex-1 text-right">
+                                    <span class="block text-[10px] uppercase font-bold text-green-800">Est. TF Pips</span>
+                                    <span id="previewTFPips" class="block text-xl font-bold tf-green">0.0</span>
+                                </div>
+                            </div>
+                        </div>
 
-            <button onclick="mathFunc('sqrt')" class="calc-btn bg-slate-800/80 text-emerald-400 p-4 rounded-xl font-bold hover:bg-slate-700">√</button>
-            <button onclick="insert('0')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">0</button>
-            <button onclick="insert('.')" class="calc-btn bg-slate-800/40 text-white p-5 rounded-xl text-xl font-bold hover:bg-slate-700">.</button>
-            <button onclick="calculate()" class="calc-btn bg-sky-500 text-white p-5 rounded-xl text-2xl font-bold shadow-lg shadow-sky-500/40 hover:bg-sky-400">=</button>
+                        <!-- Consistency Override -->
+                        <div class="pt-2">
+                            <details class="text-xs text-gray-400">
+                                <summary class="cursor-pointer hover:text-gray-600 transition">Opsi: Override History</summary>
+                                <div class="mt-2 pl-2 border-l-2 border-gray-200">
+                                    <label class="block mb-1">Valued Pips Bulan Lalu (Manual):</label>
+                                    <input type="number" id="prevValuedInput" oninput="calculateLivePreview()" class="w-full p-1.5 border border-gray-200 rounded text-xs" placeholder="Isi jika history kosong">
+                                </div>
+                            </details>
+                        </div>
+
+                        <!-- Buttons -->
+                        <button type="submit" id="submitBtn" class="w-full bg-tf-green hover:bg-[#064028] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition shadow-md shadow-green-900/10">
+                            <i data-lucide="save" size="18"></i>
+                            <span>Simpan Data</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: MONITOR & TABLE -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Monitor Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <div class="flex items-center justify-between mb-4 border-b pb-2 border-gray-100">
+                        <div class="flex items-center gap-2 tf-green">
+                            <i data-lucide="activity" size="20"></i>
+                            <h3 class="font-bold text-lg">Monitor Kualifikasi Live</h3>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Rule 1 -->
+                        <div id="cardSignal" class="p-3 rounded-lg border bg-gray-50 border-gray-200">
+                            <div class="text-[10px] font-bold uppercase text-gray-500 mb-1">Signal Rule</div>
+                            <div class="flex items-end justify-between">
+                                <span id="monSignal" class="font-bold text-lg">0</span>
+                                <i id="iconSignal" data-lucide="circle-dashed" size="16" class="text-gray-400 mb-1"></i>
+                            </div>
+                            <div class="text-[10px] text-gray-400 mt-1">Min. 5</div>
+                        </div>
+                        <!-- Rule 2 -->
+                        <div id="cardMonthly" class="p-3 rounded-lg border bg-gray-50 border-gray-200">
+                            <div class="text-[10px] font-bold uppercase text-gray-500 mb-1">Monthly Pips</div>
+                            <div class="flex items-end justify-between">
+                                <span id="monMonthly" class="font-bold text-lg">0</span>
+                                <i id="iconMonthly" data-lucide="circle-dashed" size="16" class="text-gray-400 mb-1"></i>
+                            </div>
+                            <div class="text-[10px] text-gray-400 mt-1">Must Positive</div>
+                        </div>
+                        <!-- Rule 3 -->
+                        <div id="cardValued" class="p-3 rounded-lg border bg-gray-50 border-gray-200">
+                            <div class="text-[10px] font-bold uppercase text-gray-500 mb-1">Valued Pips</div>
+                            <div class="flex items-end justify-between">
+                                <span id="monValued" class="font-bold text-lg">0.0</span>
+                                <i id="iconValued" data-lucide="circle-dashed" size="16" class="text-gray-400 mb-1"></i>
+                            </div>
+                            <div class="text-[10px] text-gray-400 mt-1">Min. 300</div>
+                        </div>
+                        <!-- Rule 4 -->
+                        <div id="cardConsist" class="p-3 rounded-lg border bg-gray-50 border-gray-200">
+                            <div class="text-[10px] font-bold uppercase text-gray-500 mb-1">Consistency</div>
+                            <div class="flex items-end justify-between">
+                                <span id="monConsist" class="font-bold text-lg">-</span>
+                                <i id="iconConsist" data-lucide="circle-dashed" size="16" class="text-gray-400 mb-1"></i>
+                            </div>
+                            <div class="text-[10px] text-gray-400 mt-1">Target: <span id="targetConsist">0</span></div>
+                        </div>
+                    </div>
+
+                    <div id="statusBanner" class="mt-4 p-3 rounded-lg flex items-center justify-between bg-gray-100 text-gray-500 transition-colors duration-300">
+                        <span class="text-sm font-bold uppercase tracking-wide">Status Kualifikasi</span>
+                        <span id="statusText" class="font-bold flex items-center gap-2">BELUM ADA DATA</span>
+                    </div>
+                </div>
+
+                <!-- History Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <div class="flex items-center justify-between mb-4 border-b pb-2 border-gray-100">
+                        <div class="flex items-center gap-2 tf-green">
+                            <i data-lucide="history" size="20"></i>
+                            <h3 class="font-bold text-lg">History Kinerja</h3>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scroll">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-500 uppercase font-bold text-[10px]">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-tl-lg">Bulan</th>
+                                    <th class="px-4 py-3 text-right">Raw Pips</th>
+                                    <th class="px-4 py-3 text-right">Valued Pips</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-right text-[#0B5D3B]">TF Pips</th>
+                                    <th class="px-4 py-3 text-right rounded-tr-lg">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-gray-100">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                        <div id="emptyState" class="hidden text-center py-10">
+                            <p class="text-gray-400 text-sm italic">Belum ada data. Silakan input kinerja bulan pertama Anda.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <!-- Footer / Simulation Logs for Netlify -->
-        <div class="mt-8 pt-4 border-t border-slate-800 text-[10px] text-slate-600 flex justify-between uppercase tracking-widest">
-            <span>Memory: 0.0kb</span>
-            <span>Mode: Radian</span>
-            <span id="timestamp"></span>
+        <div class="text-center text-[10px] text-gray-400 mt-8 pb-4">
+            TF Analyst Financial Dashboard • Single File App • Data stored locally
         </div>
-    </div>
+    </main>
 
-    <!-- Script Utama -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        const display = document.getElementById('display');
-        const historyDisplay = document.getElementById('history');
-        let currentInput = '0';
-        let shouldReset = false;
+        // --- CONSTANTS ---
+        const MEDAL_LEVELS = [
+            { medal: 0, level: "Newbie", min: 0, max: 0 },
+            { medal: 1, level: "Rookie", min: 1, max: 2 },
+            { medal: 3, level: "Pro", min: 3, max: 4 },
+            { medal: 5, level: "Elite", min: 5, max: 7 },
+            { medal: 8, level: "Master", min: 8, max: 12 },
+            { medal: 13, level: "Legend", min: 13, max: 14 }
+        ];
 
-        function updateDisplay() {
-            display.innerText = currentInput;
-            // Simulasi processing log untuk memastikan data berubah di sistem
-            console.log(`[DEBUG] Update State: ${currentInput} at ${new Date().toISOString()}`);
-        }
+        const POINT_MULTIPLIERS = [
+            { min: 0, max: 0, mult: 0 },
+            { min: 1, max: 2, mult: 0.3 },
+            { min: 3, max: 4, mult: 0.4 },
+            { min: 5, max: 7, mult: 0.5 },
+            { min: 8, max: 10, mult: 0.7 },
+            { min: 11, max: 12, mult: 1.0 },
+            { min: 13, max: 14, mult: 1.5 }
+        ];
 
-        function insert(val) {
-            if (currentInput === '0' || shouldReset) {
-                currentInput = val;
-                shouldReset = false;
-            } else {
-                currentInput += val;
-            }
-            updateDisplay();
-        }
-
-        function clearDisplay() {
-            currentInput = '0';
-            historyDisplay.innerText = '';
-            updateDisplay();
-        }
-
-        function deleteLast() {
-            if (currentInput.length > 1) {
-                currentInput = currentInput.slice(0, -1);
-            } else {
-                currentInput = '0';
-            }
-            updateDisplay();
-        }
-
-        function mathFunc(type) {
-            try {
-                let val = eval(currentInput.replace('×', '*').replace('÷', '/'));
-                let result;
-                switch(type) {
-                    case 'sin': result = Math.sin(val); break;
-                    case 'cos': result = Math.cos(val); break;
-                    case 'tan': result = Math.tan(val); break;
-                    case 'sqrt': result = Math.sqrt(val); break;
-                }
-                historyDisplay.innerText = `${type}(${currentInput})`;
-                currentInput = result.toFixed(8).replace(/\.?0+$/, "");
-                updateDisplay();
-                shouldReset = true;
-            } catch {
-                currentInput = "Error";
-                updateDisplay();
-            }
-        }
-
-        function calculate() {
-            try {
-                let expression = currentInput.replace(/×/g, '*').replace(/÷/g, '/');
-                let result = eval(expression);
-                historyDisplay.innerText = currentInput + " =";
-                currentInput = result.toString();
-                updateDisplay();
-                shouldReset = true;
-            } catch (e) {
-                currentInput = "Syntax Error";
-                updateDisplay();
-                shouldReset = true;
-            }
-        }
-
-        // Fitur Tambahan: Keyboard Support
-        window.addEventListener('keydown', (e) => {
-            if (e.key >= '0' && e.key <= '9') insert(e.key);
-            if (e.key === '+') insert('+');
-            if (e.key === '-') insert('-');
-            if (e.key === '*') insert('*');
-            if (e.key === '/') insert('/');
-            if (e.key === 'Enter') calculate();
-            if (e.key === 'Backspace') deleteLast();
-            if (e.key === 'Escape') clearDisplay();
-        });
-
-        // Loop Waktu untuk menjaga agar DOM selalu memiliki aktivitas unik saat build
-        setInterval(() => {
-            document.getElementById('timestamp').innerText = new Date().toLocaleTimeString();
-        }, 1000);
-
-        /* NETLIFY DEPLOYMENT LOGS FIX:
-           Netlify melewati proses jika tidak ada perubahan pada "headers", "redirects", atau "functions".
-           Bagian di bawah ini adalah placeholder untuk memastikan "Edge Functions" atau "Redirects" terdeteksi
-           jika Anda menyertakan file netlify.toml nantinya.
-        */
-        const _dummyNetlifyRules = {
-            redirects: "/api/* /index.html 200",
-            headers: "Cache-Control: no-cache",
-            edge_functions: ["calculate-complex"]
+        const INCOME_RATES = {
+            "Elite": 5000,
+            "Master": 10000,
+            "Legend": 20000
         };
-    </script>
 
-    <!-- Simulasi Struktur File untuk Log -->
-    <!-- _redirects content: /* /index.html 200 -->
-    <!-- functions/calculator.js content: exports.handler = async () => ({ statusCode: 200, body: "Active" }) -->
+        // --- STATE & INIT ---
+        let state = {
+            medal: parseInt(localStorage.getItem('tf_medal')) || 0,
+            membership: localStorage.getItem('tf_membership') || 'basic',
+            history: JSON.parse(localStorage.getItem('tf_history')) || []
+        };
+
+        // Initialize Icons
+        lucide.createIcons();
+        
+        // Populate Medal Select
+        const medalSelect = document.getElementById('medalSelect');
+        for(let i=0; i<=14; i++) {
+            let opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `Medal ${i}`;
+            if(i === state.medal) opt.selected = true;
+            medalSelect.appendChild(opt);
+        }
+        document.getElementById('membershipSelect').value = state.membership;
+
+        // Set default month
+        document.getElementById('monthInput').value = new Date().toISOString().slice(0, 7);
+
+        // Initial Render
+        updateDashboard();
+
+        // --- HELPER FUNCTIONS ---
+        function getLevelInfo(medal) {
+            const found = MEDAL_LEVELS.find(l => medal >= l.min && medal <= l.max);
+            return found ? found.level : "Unknown";
+        }
+
+        function getMultiplier(medal) {
+            const found = POINT_MULTIPLIERS.find(m => medal >= m.min && medal <= m.max);
+            return found ? found.mult : 0;
+        }
+
+        function formatIDR(num) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+        }
+
+        function saveState() {
+            localStorage.setItem('tf_medal', state.medal);
+            localStorage.setItem('tf_membership', state.membership);
+            localStorage.setItem('tf_history', JSON.stringify(state.history));
+            updateDashboard();
+        }
+
+        // --- CORE LOGIC ---
+        function calculateMetrics(data, medal) {
+            const signals = parseInt(data.signals) || 0;
+            const rawPips = parseFloat(data.rawPips) || 0;
+            const valuedPips = rawPips * 0.5; // XAUUSD Rule
+
+            // Consistency
+            let prevValued = parseFloat(data.prevValuedPips) || 0;
+            if(!data.prevValuedPips && state.history.length > 0) {
+                // Try find previous month from history
+                // Note: Simply sorts history and finds entry before this one for simplicity in this demo
+                // Ideally, parse Date
+                const sorted = [...state.history].sort((a,b) => new Date(b.month) - new Date(a.month));
+                const currentIdx = sorted.findIndex(x => x.id === data.id);
+                // If finding next item in sorted desc array (which is previous month)
+                // If it's a new entry (no ID in list), assume it's newest
+                if(sorted.length > 0 && data.id !== sorted[0].id) {
+                     // Simple check: Find record with month - 1. 
+                     let d = new Date(data.month + "-01");
+                     d.setMonth(d.getMonth() - 1);
+                     let prevMonthStr = d.toISOString().slice(0, 7);
+                     let prevRecord = state.history.find(h => h.month === prevMonthStr);
+                     if(prevRecord) prevValued = prevRecord.rawPips * 0.5;
+                }
+            }
+
+            const consistencyThreshold = prevValued * 0.7;
+            // Consistency rule only active from Medal 1+
+            const isConsistent = medal < 1 ? true : (valuedPips >= consistencyThreshold);
+
+            const checks = {
+                signals: signals >= 5,
+                valuedPips: valuedPips >= 300,
+                monthlyPips: rawPips > 0,
+                consistency: isConsistent
+            };
+
+            const isQualified = Object.values(checks).every(Boolean);
+            const multiplier = getMultiplier(medal);
+            const tfPoints = isQualified ? (valuedPips * multiplier) : 0;
+
+            return { checks, isQualified, valuedPips, tfPoints, prevValued, consistencyThreshold, rawPips };
+        }
+
+        // --- UI UPDATES ---
+        function updateDashboard() {
+            // 1. Update Settings State
+            state.medal = parseInt(document.getElementById('medalSelect').value);
+            state.membership = document.getElementById('membershipSelect').value;
+            
+            const currentLevel = getLevelInfo(state.medal);
+            document.getElementById('levelDisplay').innerText = currentLevel;
+            document.getElementById('multiplierDisplay').innerText = `${getMultiplier(state.medal)}x Multiplier`;
+
+            // 2. Calculate Wallet
+            let totalPoints = 0;
+            // Recalculate all history based on CURRENT MEDAL (Simulation Mode)
+            state.history.forEach(item => {
+                const metrics = calculateMetrics(item, state.medal);
+                totalPoints += metrics.tfPoints;
+            });
+
+            // Unlock Logic
+            let unlockPct = 0;
+            let lockReason = "";
+            const isElitePlus = state.medal >= 5;
+            const isMasterPlus = state.medal >= 8;
+
+            if(state.membership === 'priority') {
+                if(isMasterPlus) unlockPct = 1.0;
+                else lockReason = "Priority but < Master";
+            } else if(state.membership === 'prospect') {
+                if(isMasterPlus) unlockPct = 0.5;
+                else if(isElitePlus) unlockPct = 0.3;
+                else lockReason = "Prospect but < Elite";
+            } else { // Basic
+                if(isElitePlus) unlockPct = 0.2;
+                else lockReason = "Basic but < Elite";
+            }
+
+            // Calculation Rules
+            const rawRedeem = totalPoints * unlockPct;
+            // "Kelipatan 100" logic
+            const blocks = Math.floor(rawRedeem / 100);
+            const finalRedeem = blocks * 100;
+            const income = finalRedeem * (INCOME_RATES[currentLevel] || 0);
+
+            // Update Wallet DOM
+            document.getElementById('totalAccumulatedDisplay').innerText = totalPoints.toLocaleString('id-ID', {maximumFractionDigits: 1});
+            document.getElementById('redeemableDisplay').innerText = finalRedeem.toLocaleString('id-ID');
+            document.getElementById('incomeDisplay').innerText = finalRedeem > 0 ? formatIDR(income) : "Rp 0";
+            document.getElementById('incomeRateText').innerText = finalRedeem > 0 ? `Rate: ${formatIDR(INCOME_RATES[currentLevel] || 0)} / Pips` : "Min. Redeem 100 Pips (Kelipatan)";
+
+            const eligibleDiv = document.getElementById('eligibleContent');
+            const lockedDiv = document.getElementById('lockedContent');
+
+            if(unlockPct > 0) {
+                eligibleDiv.classList.remove('hidden');
+                eligibleDiv.classList.add('flex');
+                lockedDiv.classList.add('hidden');
+                document.getElementById('unlockRateText').innerText = `${unlockPct * 100}%`;
+                document.getElementById('unlockProgressBar').style.width = `${unlockPct * 100}%`;
+            } else {
+                eligibleDiv.classList.add('hidden');
+                eligibleDiv.classList.remove('flex');
+                lockedDiv.classList.remove('hidden');
+                document.getElementById('lockReasonText').innerText = lockReason;
+            }
+
+            // 3. Render Table
+            renderTable();
+            calculateLivePreview(); // Re-run live preview in case medal changed
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+            
+            // Sort Descending by Month
+            const sorted = [...state.history].sort((a,b) => new Date(b.month) - new Date(a.month));
+
+            if(sorted.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                sorted.forEach(item => {
+                    const m = calculateMetrics(item, state.medal);
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-gray-50 transition border-b border-gray-100 last:border-0";
+                    
+                    const dateStr = new Date(item.month).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' });
+                    const badgeClass = m.isQualified 
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-red-100 text-red-800";
+                    const badgeIcon = m.isQualified ? "check-circle-2" : "x-circle";
+                    const badgeText = m.isQualified ? "PASS" : "FAIL";
+
+                    row.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-gray-800">${dateStr}</td>
+                        <td class="px-4 py-3 text-right text-gray-500">${m.rawPips}</td>
+                        <td class="px-4 py-3 text-right font-mono font-bold">${m.valuedPips.toFixed(1)}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${badgeClass}">
+                                ${badgeText}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-right font-mono font-bold text-[#0B5D3B] text-base">${m.tfPoints.toFixed(1)}</td>
+                        <td class="px-4 py-3 text-right flex justify-end gap-2">
+                            <button onclick="editEntry('${item.id}')" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition"><i data-lucide="pencil" width="14"></i></button>
+                            <button onclick="deleteEntry('${item.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-md transition"><i data-lucide="trash-2" width="14"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                lucide.createIcons();
+            }
+        }
+
+        function calculateLivePreview() {
+            const data = {
+                id: document.getElementById('entryId').value,
+                signals: document.getElementById('signalInput').value,
+                rawPips: document.getElementById('rawPipsInput').value,
+                prevValuedPips: document.getElementById('prevValuedInput').value,
+                month: document.getElementById('monthInput').value
+            };
+
+            const m = calculateMetrics(data, state.medal);
+
+            // Update Preview Text
+            document.getElementById('previewValuedPips').innerText = m.valuedPips.toFixed(1);
+            document.getElementById('previewTFPips').innerText = m.tfPoints.toFixed(1);
+
+            // Update Monitor Cards
+            updateMonitorCard('cardSignal', 'monSignal', 'iconSignal', m.checks.signals, data.signals || 0);
+            updateMonitorCard('cardMonthly', 'monMonthly', 'iconMonthly', m.checks.monthlyPips, data.rawPips || 0);
+            updateMonitorCard('cardValued', 'monValued', 'iconValued', m.checks.valuedPips, m.valuedPips.toFixed(1));
+            
+            // Consistency Card Special
+            const consistDiv = document.getElementById('cardConsist');
+            const consistIcon = document.getElementById('iconConsist');
+            document.getElementById('monConsist').innerText = m.valuedPips >= m.consistencyThreshold ? "OK" : "DROP";
+            document.getElementById('targetConsist').innerText = m.consistencyThreshold.toFixed(0);
+            
+            if(m.checks.consistency) {
+                consistDiv.className = "p-3 rounded-lg border bg-green-50 border-green-200 transition-colors";
+                consistIcon.setAttribute('data-lucide', 'check-circle-2');
+                consistIcon.classList.replace('text-gray-400', 'text-green-600');
+            } else {
+                consistDiv.className = "p-3 rounded-lg border bg-red-50 border-red-200 transition-colors";
+                consistIcon.setAttribute('data-lucide', 'x-circle');
+                consistIcon.classList.replace('text-gray-400', 'text-red-500');
+            }
+
+            // Banner
+            const banner = document.getElementById('statusBanner');
+            const bannerText = document.getElementById('statusText');
+            if(m.isQualified) {
+                banner.className = "mt-4 p-3 rounded-lg flex items-center justify-between bg-[#0B5D3B] text-white transition-colors duration-300";
+                bannerText.innerHTML = `QUALIFIED <i data-lucide="crown" class="ml-1 text-yellow-400" width="18"></i>`;
+            } else {
+                banner.className = "mt-4 p-3 rounded-lg flex items-center justify-between bg-gray-100 text-gray-500 transition-colors duration-300";
+                bannerText.innerHTML = "NOT QUALIFIED";
+            }
+            lucide.createIcons();
+        }
+
+        function updateMonitorCard(cardId, textId, iconId, isPass, value) {
+            const card = document.getElementById(cardId);
+            const text = document.getElementById(textId);
+            const icon = document.getElementById(iconId);
+
+            text.innerText = value;
+            if(isPass) {
+                card.className = "p-3 rounded-lg border bg-green-50 border-green-200 transition-colors";
+                icon.setAttribute('data-lucide', 'check-circle-2');
+                icon.classList.remove('text-gray-400', 'text-red-500');
+                icon.classList.add('text-green-600');
+            } else {
+                card.className = "p-3 rounded-lg border bg-red-50 border-red-200 transition-colors";
+                icon.setAttribute('data-lucide', 'x-circle');
+                icon.classList.remove('text-gray-400', 'text-green-600');
+                icon.classList.add('text-red-500');
+            }
+        }
+
+        // --- FORM HANDLING ---
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('entryId').value;
+            const month = document.getElementById('monthInput').value;
+
+            // Check duplicate month
+            if(!id && state.history.some(h => h.month === month)) {
+                alert("Data untuk bulan ini sudah ada. Silakan edit yang sudah ada.");
+                return;
+            }
+
+            const entry = {
+                id: id || Date.now().toString(),
+                month: month,
+                signals: document.getElementById('signalInput').value,
+                rawPips: document.getElementById('rawPipsInput').value,
+                prevValuedPips: document.getElementById('prevValuedInput').value
+            };
+
+            if(id) {
+                // Update
+                state.history = state.history.map(item => item.id === id ? entry : item);
+            } else {
+                // Add
+                state.history.push(entry);
+            }
+
+            saveState();
+            resetForm();
+        }
+
+        function editEntry(id) {
+            const item = state.history.find(h => h.id === id);
+            if(item) {
+                document.getElementById('entryId').value = item.id;
+                document.getElementById('monthInput').value = item.month;
+                document.getElementById('signalInput').value = item.signals;
+                document.getElementById('rawPipsInput').value = item.rawPips;
+                document.getElementById('prevValuedInput').value = item.prevValuedPips || '';
+                
+                // Change UI to Edit Mode
+                document.getElementById('formTitle').innerText = "Edit Data";
+                document.getElementById('submitBtn').innerHTML = `<i data-lucide="save" width="18"></i><span>Update Data</span>`;
+                document.getElementById('cancelEditBtn').classList.remove('hidden');
+                
+                calculateLivePreview();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function deleteEntry(id) {
+            if(confirm("Apakah Anda yakin ingin menghapus data bulan ini?")) {
+                state.history = state.history.filter(h => h.id !== id);
+                saveState();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('performanceForm').reset();
+            document.getElementById('entryId').value = '';
+            document.getElementById('monthInput').value = new Date().toISOString().slice(0, 7);
+            
+            // Reset UI
+            document.getElementById('formTitle').innerText = "Input Kinerja";
+            document.getElementById('submitBtn').innerHTML = `<i data-lucide="save" width="18"></i><span>Simpan Data</span>`;
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            
+            calculateLivePreview();
+            lucide.createIcons();
+        }
+
+    </script>
 </body>
 </html>
 
